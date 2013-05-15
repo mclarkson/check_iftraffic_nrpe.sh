@@ -1,0 +1,115 @@
+++++
+<img src="http://www.smorg.co.uk/images/check_iftraffic_nrpe.sh.png"
+alt="Nagios GUI Screenshot" style="float:none" />
+++++
+
+Check Iftraffic Nrpe
+--------------------
+
+Get network interface statistics but be economical with the output and try to select interfaces automatically.
+
+*INSTALL*
+
+Example:
+
+----
+wget https://raw.github.com/mclarkson/check_iftraffic_nrpe.sh/master/check_iftraffic_nrpe.sh
+chmod +x check_iftraffic_nrpe.sh
+mv check_iftraffic_nrpe.sh /usr/lib64/nagios/plugins/
+----
+
+*EXAMPLE OUTPUT*
+
+----
+OK:
+
+OK: See graphs for stats. | in-br0=431 out-br0=578 in-em1=6377 out-em1=1782
+
+OK: Stats: br0(3k/4k) lo(2k/2k) em1(49k/13k) (in/out in bits/s) | in-br0=431 out-br0=578 in-em1=6377 out-em1=1782
+
+WARNING: Bandwidth threshold exceeded for eth1.
+
+WARNING: Bandwidth threshold exceeded.
+
+CRITICAL: lo is DOWN.
+
+CRITICAL: eth4 is DOWN.
+
+----
+
+*MANUAL PAGE*
+
+----
+$ ./check_iftraffic_nrpe.sh -h
+
+check_iftraffic_nrpe.sh - Interface statistics plugin.
+
+Usage: check_iftraffic_nrpe.sh [options]
+
+ -h      : Display this help text.
+ -i REGX : Include the interface(s) matched by the REGX regular
+           expression. Defaults to showing all interfaces.
+           Specify this option multiple times to add more.
+ -x REGX : Exclude the interface(s) matched by the REGX regular
+           expression. Defaults to excluding none. Excludes
+           will override any includes.
+           Specify this option multiple times to add more.
+ -k      : Don't include the slaves of bond devices or bond
+           devices with no slaves.
+ -p      : Include performance data (for graphing).
+ -b      : Brief - exclude stats in status message. Useful for
+           systems with many interfaces where a large status
+           message might cause truncation of the performance data.
+ -I NAME : Interface that must always be included. This is not a
+           regular expression - it should match one interface only.
+           Emits warning if an interface specified here is down.
+           Specify this option multiple times to add more.
+ -a      : Semi automatic. This will try to work out if the
+           interface is intentionally down or not and alert in
+           the latter case. For example, if the administrator
+           did 'ip li set eth2 up' then it would alert when down,
+           but if instead 'ip li set eth2 down' then there would
+           be no alert; the loopback device should always be up.
+ -d      : Exclude devices which are down, unless specifically
+           included with '-I', in which case, a warning will be
+           issued that the interface is down.
+ -D NAME : Don't include performance stats for NAME interface.
+ -B      : Use bytes/s instead of bits/s in message output.
+ -s      : The interface speed in Mbits/s. This will be set the
+           same for all selected interfaces. E.g. 1, 5, 10, 100.
+           Default is 100.
+ -w NUM  : Warning threshold percentage. Warn when bandwidth
+           usage exceeds NUM percent of the maximum. Interfaces
+           in the '-D', no performance stats, list will not be
+           checked. Default is 0, which also means, off.
+
+Examples:
+
+ Check all interfaces:
+
+ ./check_iftraffic_nrpe.sh
+
+ Show when loopback is down but don't create performance stats
+ for it:
+
+ ./check_iftraffic_nrpe.sh -D lo -p
+
+ Show when loopback is down but don't create performance stats
+ for it, create performance stats for everything else, don't
+ show slaves of bond devices or downed interfaces:
+
+ ./check_iftraffic_nrpe.sh -D lo -p -k -d
+
+ Same as previous but use the smarter '-a' instead of '-d'.
+ If the admin set the interface to be up but the interface is
+ down then an alert will be raised.
+
+ ./check_iftraffic_nrpe.sh -D lo -p -k -a
+
+ Same as previous but assume all interfaces are 100mbit and
+ alert if either inboud or outbound traffic exceeds 95%.
+
+ ./check_iftraffic_nrpe.sh -D lo -p -k -a -s 100 -w 95
+
+----
+
