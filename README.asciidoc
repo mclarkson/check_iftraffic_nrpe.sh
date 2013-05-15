@@ -13,10 +13,13 @@ Get network interface statistics but be economical with the output and try to se
 Example:
 
 ----
+wget https://raw.github.com/mclarkson/check_iftraffic_nrpe.sh/master/check_iftraffic_nrpe.sh.php
 wget https://raw.github.com/mclarkson/check_iftraffic_nrpe.sh/master/check_iftraffic_nrpe.sh
 chmod +x check_iftraffic_nrpe.sh
 mv check_iftraffic_nrpe.sh /usr/lib64/nagios/plugins/
 ----
+
+Copy 'check_iftraffic_nrpe.sh.php' to the 'templates.dist' directory in pnp4nagios.
 
 *EXAMPLE OUTPUT*
 
