@@ -392,9 +392,10 @@ do_check()
         # Only process selected interfaces
         [[ ${IFshow[i]} -ne $INCLUDE ]] && continue
         [[ ${IFL[i]} != ${IFLL[i]} ]] && {
-            # Should really search but should work so assert instead
-            echo "UNKNOWN: IF mismatch - need extra code to match interfaces!"
-            exit $UNKN
+            # Something has changed. Pretend this is the first time again.
+            write_iflist_stats_to_file
+            echo "WARNING: Interfaces changed. Got first sample, again."
+            exit $WARN
         }
         rxl=`echo "${IFD[i]}" | cut -d " " -f 1`
         txl=`echo "${IFD[i]}" | cut -d " " -f 9`
