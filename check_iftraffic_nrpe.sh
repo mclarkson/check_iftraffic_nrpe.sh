@@ -447,6 +447,13 @@ do_check()
         }
     done
 
+    # Check for negative value. Happens after reboot or rollover.
+    [[ $Bpstx -le 0 || $Bpsrx -le 0 ]] && {
+        write_iflist_stats_to_file
+        echo "OK: Got first data sample."
+        exit $OK
+    }
+
     if [[ $USEBYTES -eq 0 ]]; then
         MESSAGE+="(in/out in bits/s)"
     else
