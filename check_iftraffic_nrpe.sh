@@ -7,8 +7,9 @@
 #
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
-# Version: 0.10
-# Modified:
+# Version: 0.11
+# Modified: 09 Feb 2014 (Mark Clarkson)
+#           Added check for negative bandwidth.
 #
 # Purpose: Check and stat a number of network interfaces.
 #
@@ -31,7 +32,7 @@ ME="$0"
 CMDLINE="$@"
 TRUE=1
 FALSE=0
-VERSION="0.10"
+VERSION="0.11"
 OK=0
 WARN=1
 CRIT=2
