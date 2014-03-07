@@ -7,9 +7,11 @@
 #
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
-# Version: 0.11
+# Version: 0.12
 # Modified: 09 Feb 2014 (Mark Clarkson)
 #           Added check for negative bandwidth.
+#           07 Mar 2014 (Mark Clarkson)
+#           Fixed perpetual 'Got first data sample' problem
 #
 # Purpose: Check and stat a number of network interfaces.
 #
