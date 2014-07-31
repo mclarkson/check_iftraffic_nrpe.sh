@@ -85,6 +85,9 @@ Usage: check_iftraffic_nrpe.sh [options]
            usage exceeds NUM percent of the maximum. Interfaces
            in the '-D', no performance stats, list will not be
            checked. Default is 0, which also means, off.
+ -m NUM  : MatchID. Adds the match ID to the cache file name.
+           This allows the plugin to be run for different
+           checks or from multiple servers.
 
 Examples:
 
