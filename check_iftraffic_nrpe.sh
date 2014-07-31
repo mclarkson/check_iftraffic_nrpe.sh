@@ -60,6 +60,7 @@ SYSD="/sys/class/net"
 VLAND="/proc/net/vlan"
 IFCACHE=
 MESSAGE=
+MATCHID=
 
 declare -i WITHPERF=0 PRUNESLAVES=0 CHECKBOND=0 PRUNEDOWN=0 SEMIAUTO=0
 declare -i USEBYTES=0 IFSPEED=100 WARNPC=0 WARNVAL=0 BRIEF=0
@@ -87,7 +88,7 @@ main()
 
     sanity_checks
 
-    IFCACHE="$IFCACHEPREFIX.`id -un`.cache"
+    IFCACHE="$IFCACHEPREFIX.$MATCHID.`id -un`.cache"
 
     do_check
 
@@ -216,6 +217,9 @@ usage()
     echo "           checked. Default is 0, which also means, off."
     #echo " -b      : Check bond devices for errors; Alerts if:"
     #echo "              - A bond has no slave devices."
+    echo " -m NUM  : MatchID. Adds the match ID to the cache file name."
+    echo "           This allows the plugin to be run for different"
+    echo "           checks or from multiple servers."
     echo
     echo "Examples:"
     echo
@@ -510,6 +514,9 @@ parse_options()
                 else
                     NOPERF+="|$2"
                 fi
+                shift
+            ;;
+            -m) MATCHID="$2"
                 shift
             ;;
             -s) IFSPEED="$2"
