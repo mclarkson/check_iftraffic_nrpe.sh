@@ -375,6 +375,7 @@ do_check()
 {
     local -i now i rxl txl deltarx deltatx deltats bpsrx bpstx kbpstx kbpsrx
     local t
+    local -i minus_values=0
 
     fill_netdev_iflist
 
@@ -448,10 +449,16 @@ do_check()
             }
             PERF+="in-${IFL[i]}=${Bpsrx} out-${IFL[i]}=${Bpstx} "
         }
+
+        # Check for negative value. Happens after reboot or rollover.
+        [[ $Bpstx -lt 0 || $Bpsrx -lt 0 ]] && {
+            minus_values=1
+        }
+
     done
 
     # Check for negative value. Happens after reboot or rollover.
-    [[ $Bpstx -lt 0 || $Bpsrx -lt 0 ]] && {
+    [[ $minus_values -eq 1 ]] && {
         write_iflist_stats_to_file
         echo "OK: Got first data sample."
         exit $OK
