@@ -152,7 +152,7 @@ sanity_checks()
         }
     done
 
-    for binary in grep sed dd id; do
+    for binary in grep sed dd id date; do
         if ! which $binary >& /dev/null; then
             echo "UNKNOWN: $binary binary not found in path. Aborting."
             exit $UNKN
