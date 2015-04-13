@@ -7,13 +7,15 @@
 #
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
-# Version: 0.13
+# Version: 0.14
 # Modified: 09 Feb 2014 (Mark Clarkson)
 #           Added check for negative bandwidth.
 #           07 Mar 2014 (Mark Clarkson)
 #           Fixed perpetual 'Got first data sample' problem
 #           18 Feb 2015 (Mark Clarkson)
 #           Also check for the 'date' command.
+#           13 Apr 2015 (Mark Clarkson)
+#           New option '-u' changes unkown errors into warning errors.
 #
 # Purpose: Check and stat a number of network interfaces.
 #
@@ -41,6 +43,7 @@ OK=0
 WARN=1
 CRIT=2
 UNKN=3
+UNKNOWN="UNKNOWN"
 
 UNSET=99
 EXCLUDE=0
@@ -149,25 +152,25 @@ sanity_checks()
 
     for i in "$DEVF" "$SYSD"; do
         [[ ! -r $i ]] && {
-            echo "UNKNOWN: Cannot access '$i'. Proc or sys not mounted?"
+            echo "$UNKNOWN: Cannot access '$i'. Proc or sys not mounted?"
             exit 3
         }
     done
 
     for binary in grep sed dd id date; do
         if ! which $binary >& /dev/null; then
-            echo "UNKNOWN: $binary binary not found in path. Aborting."
+            echo "$UNKNOWN: $binary binary not found in path. Aborting."
             exit $UNKN
         fi
     done
 
     [[ -e $IFCACHE && ! -w $IFCACHE ]] && {
-        echo "UNKNOWN: Cache file is not writable. Delete '$IFCACHE'."
+        echo "$UNKNOWN: Cache file is not writable. Delete '$IFCACHE'."
         exit $UNKN
     }
 
     [[ $IFSPEED -eq 0 ]] && {
-        echo "UNKNOWN: Invalid interface speed specified ($IFSPEED)"
+        echo "$UNKNOWN: Invalid interface speed specified ($IFSPEED)"
         exit $UNKN
     }
 }
@@ -222,6 +225,7 @@ usage()
     echo " -m NUM  : MatchID. Adds the match ID to the cache file name."
     echo "           This allows the plugin to be run for different"
     echo "           checks or from multiple servers."
+    echo " -u      : Unknown errors are changed to warning errors."
     echo
     echo "Examples:"
     echo
@@ -413,7 +417,7 @@ do_check()
         deltatx=$(($txl-${tx[i]}))
         deltats=$((now-${ts[i]}))
         [[ $deltats -le 0 ]] && {
-            echo "UNKNOWN: Invalid time delta ($deltats). Aborting."
+            echo "$UNKNOWN: Invalid time delta ($deltats). Aborting."
             exit $UNKN
         }
         # Bytes per second (perf output)
@@ -546,6 +550,8 @@ parse_options()
             -B) USEBYTES=1
             ;;
             -a) SEMIAUTO=1
+            ;;
+            -u) UNKN=1; UNKNOWN="WARNING"
             ;;
             -h) usage
                 exit 0
