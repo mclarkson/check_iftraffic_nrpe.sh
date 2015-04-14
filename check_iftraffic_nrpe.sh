@@ -7,7 +7,7 @@
 #
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
-# Version: 0.14
+# Version: 0.15
 # Modified: 09 Feb 2014 (Mark Clarkson)
 #           Added check for negative bandwidth.
 #           07 Mar 2014 (Mark Clarkson)
@@ -16,6 +16,8 @@
 #           Also check for the 'date' command.
 #           13 Apr 2015 (Mark Clarkson)
 #           New option '-u' changes unkown errors into warning errors.
+#           14 Apr 2015 (Mark Clarkson)
+#           Added check or cache directory writeability.
 #
 # Purpose: Check and stat a number of network interfaces.
 #
@@ -91,9 +93,9 @@ main()
 
     parse_options "$@"
 
-    sanity_checks
-
     IFCACHE="$IFCACHEPREFIX.$MATCHID.`id -un`.cache"
+
+    sanity_checks
 
     do_check
 
@@ -163,6 +165,12 @@ sanity_checks()
             exit $UNKN
         fi
     done
+
+    [[ ! -w ${IFCACHE%/*} ]] && {
+        echo -n "$UNKNOWN: Cache directory is not writable. Check "
+        echo " '${IFCACHE%/*}' permissions."
+        exit $UNKN
+    }
 
     [[ -e $IFCACHE && ! -w $IFCACHE ]] && {
         echo "$UNKNOWN: Cache file is not writable. Delete '$IFCACHE'."
