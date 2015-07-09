@@ -7,8 +7,10 @@
 #
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
-# Version: 0.15
-# Modified: 09 Feb 2014 (Mark Clarkson)
+# Version: 0.16
+# Modified: 09 Jul 2015 (davidak)
+#           Added Overflow correction
+#           09 Feb 2014 (Mark Clarkson)
 #           Added check for negative bandwidth.
 #           07 Mar 2014 (Mark Clarkson)
 #           Fixed perpetual 'Got first data sample' problem
