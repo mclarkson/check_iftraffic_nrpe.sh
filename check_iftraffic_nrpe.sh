@@ -438,6 +438,12 @@ do_check()
         }
         rxl=`echo "${IFD[i]}" | cut -d " " -f 1`
         txl=`echo "${IFD[i]}" | cut -d " " -f 9`
+
+        # Correct possible Overflow
+        rx1=$(correct_overflow "$rx1" "${rx[i]}" "4294967295")
+        tx1=$(correct_overflow "$tx1" "${tx[i]}" "4294967295")
+
+        # Calculate Deltas
         deltarx=$(($rxl-${rx[i]}))
         deltatx=$(($txl-${tx[i]}))
         deltats=$((now-${ts[i]}))
