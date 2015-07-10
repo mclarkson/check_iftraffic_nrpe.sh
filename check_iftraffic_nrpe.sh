@@ -439,9 +439,21 @@ do_check()
         rxl=`echo "${IFD[i]}" | cut -d " " -f 1`
         txl=`echo "${IFD[i]}" | cut -d " " -f 9`
 
-        # Correct possible Overflow
-        rx1=$(correct_overflow "$rx1" "${rx[i]}" "4294967295")
-        tx1=$(correct_overflow "$tx1" "${tx[i]}" "4294967295")
+        # DEBUG #####
+        # echo -e "\n${IFL[i]}:"
+        # echo "rx1 = $rx1"
+        # echo "tx1 = $tx1"
+
+        # echo "last rx = ${rx[i]}"
+        # echo "last tx = ${tx[i]}"
+
+        # # Correct possible Overflow, only if there is a value
+        # if [ -n "$rxl" ]; then
+        #     rx1=$(correct_overflow "$rx1" "${rx[i]}" "4294967295")
+        # fi
+        # if [ -n "$txl" ]; then
+        #     tx1=$(correct_overflow "$tx1" "${tx[i]}" "4294967295")
+        # fi
 
         # Calculate Deltas
         deltarx=$(($rxl-${rx[i]}))
@@ -492,18 +504,18 @@ do_check()
         }
 
         # Check for negative value. Happens after reboot or rollover.
-        [[ $Bpstx -lt 0 || $Bpsrx -lt 0 ]] && {
-            minus_values=1
-        }
+        #[[ $Bpstx -lt 0 || $Bpsrx -lt 0 ]] && {
+        #    minus_values=1
+        #}
 
     done
 
     # Check for negative value. Happens after reboot or rollover.
-    [[ $minus_values -eq 1 ]] && {
-        write_iflist_stats_to_file
-        echo "OK: Got first data sample."
-        exit $OK
-    }
+    #[[ $minus_values -eq 1 ]] && {
+    #    write_iflist_stats_to_file
+    #    echo "OK: Got first data sample."
+    #    exit $OK
+    #}
 
     if [[ $USEBYTES -eq 0 ]]; then
         MESSAGE+="(in/out in bits/s)"
