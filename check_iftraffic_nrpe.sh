@@ -8,9 +8,7 @@
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
 # Version: 0.16
-# Modified: 09 Jul 2015 (davidak)
-#           Added Overflow correction
-#           09 Feb 2014 (Mark Clarkson)
+# Modified: 09 Feb 2014 (Mark Clarkson)
 #           Added check for negative bandwidth.
 #           07 Mar 2014 (Mark Clarkson)
 #           Fixed perpetual 'Got first data sample' problem
@@ -20,6 +18,8 @@
 #           New option '-u' changes unkown errors into warning errors.
 #           14 Apr 2015 (Mark Clarkson)
 #           Added check or cache directory writeability.
+#           10 Jul 2015 (davidak)
+#           Added Rollover correction
 #
 # Purpose: Check and stat a number of network interfaces.
 #
@@ -72,7 +72,7 @@ MESSAGE=
 MATCHID=
 
 declare -i WITHPERF=0 PRUNESLAVES=0 CHECKBOND=0 PRUNEDOWN=0 SEMIAUTO=0
-declare -i USEBYTES=0 IFSPEED=100 WARNPC=0 WARNVAL=0 BRIEF=0
+declare -i USEBYTES=0 IFSPEED=100 WARNPC=0 WARNVAL=0 BRIEF=0 ROLLOVER=0
 
 declare -a IFL         # Interface list 
 declare -a IFLL        # Interface list last (from cache)
@@ -204,6 +204,7 @@ usage()
     echo "           Specify this option multiple times to add more."
     echo " -k      : Don't include the slaves of bond devices or bond"
     echo "           devices with no slaves."
+    echo " -r      : Check for Rollover of Values and correct them."
     echo " -p      : Include performance data (for graphing)."
     echo " -b      : Brief - exclude stats in status message. Useful for"
     echo "           systems with many interfaces where a large status"
@@ -439,21 +440,11 @@ do_check()
         rxl=`echo "${IFD[i]}" | cut -d " " -f 1`
         txl=`echo "${IFD[i]}" | cut -d " " -f 9`
 
-        # DEBUG #####
-        # echo -e "\n${IFL[i]}:"
-        # echo "rx1 = $rx1"
-        # echo "tx1 = $tx1"
-
-        # echo "last rx = ${rx[i]}"
-        # echo "last tx = ${tx[i]}"
-
-        # # Correct possible Overflow, only if there is a value
-        # if [ -n "$rxl" ]; then
-        #     rx1=$(correct_overflow "$rx1" "${rx[i]}" "4294967295")
-        # fi
-        # if [ -n "$txl" ]; then
-        #     tx1=$(correct_overflow "$tx1" "${tx[i]}" "4294967295")
-        # fi
+        # Correct possible Rollover
+        [[ $ROLLOVER -eq 1 ]] && {
+            rxl=$(correct_overflow "$rxl" "${rx[i]}" "4294967295")
+            txl=$(correct_overflow "$txl" "${tx[i]}" "4294967295")
+        }
 
         # Calculate Deltas
         deltarx=$(($rxl-${rx[i]}))
@@ -504,18 +495,18 @@ do_check()
         }
 
         # Check for negative value. Happens after reboot or rollover.
-        #[[ $Bpstx -lt 0 || $Bpsrx -lt 0 ]] && {
-        #    minus_values=1
-        #}
+        [[ $Bpstx -lt 0 || $Bpsrx -lt 0 ]] && {
+           minus_values=1
+        }
 
     done
 
     # Check for negative value. Happens after reboot or rollover.
-    #[[ $minus_values -eq 1 ]] && {
-    #    write_iflist_stats_to_file
-    #    echo "OK: Got first data sample."
-    #    exit $OK
-    #}
+    [[ $minus_values -eq 1 ]] && {
+       write_iflist_stats_to_file
+       echo "OK: Got first data sample."
+       exit $OK
+    }
 
     if [[ $USEBYTES -eq 0 ]]; then
         MESSAGE+="(in/out in bits/s)"
@@ -587,6 +578,8 @@ parse_options()
             -d) PRUNEDOWN=1
             ;;
             -k) PRUNESLAVES=1
+            ;;
+            -r) ROLLOVER=1
             ;;
             -b) CHECKBOND=1
             ;;
