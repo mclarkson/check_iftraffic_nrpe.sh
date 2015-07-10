@@ -59,6 +59,7 @@ Usage: check_iftraffic_nrpe.sh [options]
            Specify this option multiple times to add more.
  -k      : Don't include the slaves of bond devices or bond
            devices with no slaves.
+ -r      : Check for Rollover of Values and correct them.
  -p      : Include performance data (for graphing).
  -b      : Brief - exclude stats in status message. Useful for
            systems with many interfaces where a large status
@@ -88,6 +89,7 @@ Usage: check_iftraffic_nrpe.sh [options]
  -m NUM  : MatchID. Adds the match ID to the cache file name.
            This allows the plugin to be run for different
            checks or from multiple servers.
+ -u      : Unknown errors are changed to warning errors.
 
 Examples:
 
