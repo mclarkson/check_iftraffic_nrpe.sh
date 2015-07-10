@@ -391,7 +391,7 @@ write_iflist_stats_to_file()
 }
 
 # ---------------------------------------------------------------------------
-correct_overflow()
+correct_rollover()
 # ---------------------------------------------------------------------------
 {
     local bytes=$1 last_bytes=$2 max_bytes=$3
@@ -442,8 +442,8 @@ do_check()
 
         # Correct possible Rollover
         [[ $ROLLOVER -eq 1 ]] && {
-            rxl=$(correct_overflow "$rxl" "${rx[i]}" "4294967295")
-            txl=$(correct_overflow "$txl" "${tx[i]}" "4294967295")
+            rxl=$(correct_rollover "$rxl" "${rx[i]}" "4294967295")
+            txl=$(correct_rollover "$txl" "${tx[i]}" "4294967295")
         }
 
         # Calculate Deltas
