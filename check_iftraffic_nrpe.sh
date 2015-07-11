@@ -7,7 +7,7 @@
 #
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
-# Version: 0.15
+# Version: 0.16
 # Modified: 09 Feb 2014 (Mark Clarkson)
 #           Added check for negative bandwidth.
 #           07 Mar 2014 (Mark Clarkson)
@@ -18,6 +18,8 @@
 #           New option '-u' changes unkown errors into warning errors.
 #           14 Apr 2015 (Mark Clarkson)
 #           Added check or cache directory writeability.
+#           10 Jul 2015 (davidak)
+#           Added Rollover correction
 #
 # Purpose: Check and stat a number of network interfaces.
 #
@@ -40,7 +42,7 @@ ME="$0"
 CMDLINE="$@"
 TRUE=1
 FALSE=0
-VERSION="0.12"
+VERSION="0.16"
 OK=0
 WARN=1
 CRIT=2
@@ -70,7 +72,7 @@ MESSAGE=
 MATCHID=
 
 declare -i WITHPERF=0 PRUNESLAVES=0 CHECKBOND=0 PRUNEDOWN=0 SEMIAUTO=0
-declare -i USEBYTES=0 IFSPEED=100 WARNPC=0 WARNVAL=0 BRIEF=0
+declare -i USEBYTES=0 IFSPEED=100 WARNPC=0 WARNVAL=0 BRIEF=0 ROLLOVER=0
 
 declare -a IFL         # Interface list 
 declare -a IFLL        # Interface list last (from cache)
@@ -202,6 +204,7 @@ usage()
     echo "           Specify this option multiple times to add more."
     echo " -k      : Don't include the slaves of bond devices or bond"
     echo "           devices with no slaves."
+    echo " -r      : Check for Rollover of Values and correct them."
     echo " -p      : Include performance data (for graphing)."
     echo " -b      : Brief - exclude stats in status message. Useful for"
     echo "           systems with many interfaces where a large status"
@@ -388,6 +391,21 @@ write_iflist_stats_to_file()
 }
 
 # ---------------------------------------------------------------------------
+correct_rollover()
+# ---------------------------------------------------------------------------
+{
+    local bytes=$1 last_bytes=$2 max_bytes=$3
+
+    if [[ $bytes -lt $last_bytes ]]; then
+        let "bytes += $max_bytes"
+    fi
+    if [[ $bytes -lt $last_bytes ]]; then
+        bytes=$last_bytes
+    fi
+    echo $bytes
+}
+
+# ---------------------------------------------------------------------------
 do_check()
 # ---------------------------------------------------------------------------
 {
@@ -421,6 +439,14 @@ do_check()
         }
         rxl=`echo "${IFD[i]}" | cut -d " " -f 1`
         txl=`echo "${IFD[i]}" | cut -d " " -f 9`
+
+        # Correct possible Rollover
+        [[ $ROLLOVER -eq 1 ]] && {
+            rxl=$(correct_rollover "$rxl" "${rx[i]}" "4294967295")
+            txl=$(correct_rollover "$txl" "${tx[i]}" "4294967295")
+        }
+
+        # Calculate Deltas
         deltarx=$(($rxl-${rx[i]}))
         deltatx=$(($txl-${tx[i]}))
         deltats=$((now-${ts[i]}))
@@ -470,16 +496,16 @@ do_check()
 
         # Check for negative value. Happens after reboot or rollover.
         [[ $Bpstx -lt 0 || $Bpsrx -lt 0 ]] && {
-            minus_values=1
+           minus_values=1
         }
 
     done
 
     # Check for negative value. Happens after reboot or rollover.
     [[ $minus_values -eq 1 ]] && {
-        write_iflist_stats_to_file
-        echo "OK: Got first data sample."
-        exit $OK
+       write_iflist_stats_to_file
+       echo "OK: Got first data sample."
+       exit $OK
     }
 
     if [[ $USEBYTES -eq 0 ]]; then
@@ -552,6 +578,8 @@ parse_options()
             -d) PRUNEDOWN=1
             ;;
             -k) PRUNESLAVES=1
+            ;;
+            -r) ROLLOVER=1
             ;;
             -b) CHECKBOND=1
             ;;
