@@ -61,6 +61,7 @@ Usage: check_iftraffic_nrpe.sh [options]
            devices with no slaves.
  -r      : Check for Rollover of Values and correct them.
  -p      : Include performance data (for graphing).
+ -P      : Performance data in bits/s instead of bytes/s.
  -b      : Brief - exclude stats in status message. Useful for
            systems with many interfaces where a large status
            message might cause truncation of the performance data.
@@ -78,7 +79,7 @@ Usage: check_iftraffic_nrpe.sh [options]
            included with '-I', in which case, a warning will be
            issued that the interface is down.
  -D NAME : Don't include performance stats for NAME interface.
- -B      : Use bytes/s instead of bits/s in message output.
+ -B      : Use bits/s instead of bytes/s in message output.
  -s      : The interface speed in Mbits/s. This will be set the
            same for all selected interfaces. E.g. 1, 5, 10, 100.
            Default is 100.

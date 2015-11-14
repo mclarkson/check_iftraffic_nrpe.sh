@@ -7,7 +7,7 @@
 #
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
-# Version: 0.16
+# Version: 0.17
 # Modified: 09 Feb 2014 (Mark Clarkson)
 #           Added check for negative bandwidth.
 #           07 Mar 2014 (Mark Clarkson)
@@ -20,6 +20,10 @@
 #           Added check or cache directory writeability.
 #           10 Jul 2015 (davidak)
 #           Added Rollover correction
+#           12 Nov 2015 (mclarkson)
+#           Divide by 1000 (SI, IEC 60027-2), not 1024
+#           Bits/s and Bytes/s toggle for performance output
+#           Reported by Olivier Van Muysewinkel
 #
 # Purpose: Check and stat a number of network interfaces.
 #
@@ -33,6 +37,9 @@
 
 # The interface statistics are cached in IFCACHEPREFIX.<username>.cache
 IFCACHEPREFIX="/var/tmp/check_iftraffic_nrpe_sh"
+
+# Divisor. 1000 for Decimal, 1024 for binary
+DIVISOR=1000
 
 # ---------------------------------------------------------------------------
 # DON'T TOUCH ANYTHING BELOW
@@ -62,6 +69,7 @@ VLAN=4
 INCL="."
 EXCL="."
 PERF=
+PERFUSEBITS=0
 NOPERF="WoNtMaTcHaDaRnThInG"
 MINCL="WoNtMaTcHaDaRnThInG"
 DEVF="/proc/net/dev"
@@ -72,7 +80,7 @@ MESSAGE=
 MATCHID=
 
 declare -i WITHPERF=0 PRUNESLAVES=0 CHECKBOND=0 PRUNEDOWN=0 SEMIAUTO=0
-declare -i USEBYTES=0 IFSPEED=100 WARNPC=0 WARNVAL=0 BRIEF=0 ROLLOVER=0
+declare -i USEBITS=0 IFSPEED=100 WARNPC=0 WARNVAL=0 BRIEF=0 ROLLOVER=0
 
 declare -a IFL         # Interface list 
 declare -a IFLL        # Interface list last (from cache)
@@ -206,6 +214,7 @@ usage()
     echo "           devices with no slaves."
     echo " -r      : Check for Rollover of Values and correct them."
     echo " -p      : Include performance data (for graphing)."
+    echo " -P      : Performance data in bits/s instead of bytes/s."
     echo " -b      : Brief - exclude stats in status message. Useful for"
     echo "           systems with many interfaces where a large status"
     echo "           message might cause truncation of the performance data."
@@ -223,7 +232,7 @@ usage()
     echo "           included with '-I', in which case, a warning will be"
     echo "           issued that the interface is down."
     echo " -D NAME : Don't include performance stats for NAME interface."
-    echo " -B      : Use bytes/s instead of bits/s in message output."
+    echo " -B      : Use bits/s instead of bytes/s in message output."
     echo " -s      : The interface speed in Mbits/s. This will be set the"
     echo "           same for all selected interfaces. E.g. 1, 5, 10, 100."
     echo "           Default is 100."
@@ -459,27 +468,33 @@ do_check()
         Bpstx=$((deltatx/deltats))
         bpsrx=$((Bpsrx*8))
         bpstx=$((Bpstx*8))
-        if [[ $USEBYTES -eq 0 ]]; then
+        # Binary indicator
+        if [[ $DIVISOR -eq 1000 ]]; then
+            O=""  # decimal
+        else
+            O="i" # binary
+        fi
+        if [[ $USEBITS -eq 1 ]]; then
             # Kilo-bits per second (message output)
             rx=$bpsrx ; ur=""
             tx=$bpstx ; ut=""
-            [[ $bpsrx -gt 1100 ]] && { rx=$(($bpsrx/1024)); ur="k"; }
-            [[ $bpstx -gt 1100 ]] && { tx=$(($bpstx/1024)); ut="k"; }
-            [[ $ur = "k" && $bpsrx -gt $((1100*1024)) ]] && \
-                { rx=$(($rx/1024)); ur="M"; }
-            [[ $ut = "k" && $bpstx -gt $((1100*1024)) ]] && \
-                { tx=$(($tx/1024)); ut="M"; }
+            [[ $bpsrx -gt 1100 ]] && { rx=$(($bpsrx/$DIVISOR)); ur="K${O}"; }
+            [[ $bpstx -gt 1100 ]] && { tx=$(($bpstx/$DIVISOR)); ut="K${O}"; }
+            [[ $ur = "k$O" && $bpsrx -gt $((1100*$DIVISOR)) ]] && \
+                { rx=$(($rx/$DIVISOR)); ur="M${O}"; }
+            [[ $ut = "k$O" && $bpstx -gt $((1100*$DIVISOR)) ]] && \
+                { tx=$(($tx/$DIVISOR)); ut="M$O"; }
             MESSAGE+="${IFL[i]}(${rx}$ur/${tx}$ut) "
         else
             # Bytes per second (message output)
             rx=$Bpsrx ; ur=""
             tx=$Bpstx ; ut=""
-            [[ $Bpsrx -gt 1100 ]] && { rx=$(($Bpsrx/1024)); ur="k"; }
-            [[ $Bpstx -gt 1100 ]] && { tx=$(($Bpstx/1024)); ut="k"; }
-            [[ $ur = "k" && $Bpsrx -gt $((1100*1024)) ]] && \
-                { rx=$(($rx/1024)); ur="M"; }
-            [[ $ut = "k" && $Bpstx -gt $((1100*1024)) ]] && \
-                { tx=$(($tx/1024)); ut="M"; }
+            [[ $Bpsrx -gt 1100 ]] && { rx=$(($Bpsrx/$DIVISOR)); ur="k$O"; }
+            [[ $Bpstx -gt 1100 ]] && { tx=$(($Bpstx/$DIVISOR)); ut="k$O"; }
+            [[ $ur = "k$O" && $Bpsrx -gt $((1100*$DIVISOR)) ]] && \
+                { rx=$(($rx/$DIVISOR)); ur="M$O"; }
+            [[ $ut = "k$O" && $Bpstx -gt $((1100*$DIVISOR)) ]] && \
+                { tx=$(($tx/$DIVISOR)); ut="M$O"; }
             MESSAGE+="${IFL[i]}(${rx}$ur/${tx}$ut) "
         fi
         # Is interface in NOPERF list
@@ -491,7 +506,11 @@ do_check()
                     IFbwe[i]=1
                 }
             }
-            PERF+="in-${IFL[i]}=${Bpsrx} out-${IFL[i]}=${Bpstx} "
+            if [[ $PERFUSEBITS -eq 1 ]]; then
+                PERF+="in-${IFL[i]}=$(($Bpsrx*8)) out-${IFL[i]}=$(($Bpstx*8)) "
+            else
+                PERF+="in-${IFL[i]}=${Bpsrx} out-${IFL[i]}=${Bpstx} "
+            fi
         }
 
         # Check for negative value. Happens after reboot or rollover.
@@ -508,7 +527,7 @@ do_check()
        exit $OK
     }
 
-    if [[ $USEBYTES -eq 0 ]]; then
+    if [[ $USEBITS -eq 1 ]]; then
         MESSAGE+="(in/out in bits/s)"
     else
         MESSAGE+="(in/out in bytes/s)"
@@ -583,7 +602,9 @@ parse_options()
             ;;
             -b) CHECKBOND=1
             ;;
-            -B) USEBYTES=1
+            -B) USEBITS=1
+            ;;
+            -P) PERFUSEBITS=1
             ;;
             -a) SEMIAUTO=1
             ;;
@@ -600,7 +621,7 @@ parse_options()
     shift 1 || break
     done
 
-    IFSPEED=$((IFSPEED*1024*1024))
+    IFSPEED=$((IFSPEED*$DIVISOR*$DIVISOR))
     [[ $WARNPC -gt 0 ]] && WARNVAL=$((($WARNPC*$IFSPEED)/100))
 }
 
