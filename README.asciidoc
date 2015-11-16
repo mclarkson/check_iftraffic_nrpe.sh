@@ -45,6 +45,7 @@ CRITICAL: eth4 is DOWN.
 ----
 $ ./check_iftraffic_nrpe.sh -h
 
+
 check_iftraffic_nrpe.sh - Interface statistics plugin.
 
 Usage: check_iftraffic_nrpe.sh [options]
@@ -79,7 +80,7 @@ Usage: check_iftraffic_nrpe.sh [options]
            included with '-I', in which case, a warning will be
            issued that the interface is down.
  -D NAME : Don't include performance stats for NAME interface.
- -B      : Use bits/s instead of bytes/s in message output.
+ -B      : Message output in bits/s instead of bytes/s.
  -s      : The interface speed in Mbits/s. This will be set the
            same for all selected interfaces. E.g. 1, 5, 10, 100.
            Default is 100.

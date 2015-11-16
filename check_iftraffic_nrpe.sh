@@ -7,7 +7,7 @@
 #
 # File: check_iftraffic_nrpe.sh
 # Date: 14 May 2013
-# Version: 0.17
+# Version: 0.18
 # Modified: 09 Feb 2014 (Mark Clarkson)
 #           Added check for negative bandwidth.
 #           07 Mar 2014 (Mark Clarkson)
@@ -49,7 +49,7 @@ ME="$0"
 CMDLINE="$@"
 TRUE=1
 FALSE=0
-VERSION="0.16"
+VERSION="0.18"
 OK=0
 WARN=1
 CRIT=2
@@ -232,7 +232,7 @@ usage()
     echo "           included with '-I', in which case, a warning will be"
     echo "           issued that the interface is down."
     echo " -D NAME : Don't include performance stats for NAME interface."
-    echo " -B      : Use bits/s instead of bytes/s in message output."
+    echo " -B      : Message output in bits/s instead of bytes/s."
     echo " -s      : The interface speed in Mbits/s. This will be set the"
     echo "           same for all selected interfaces. E.g. 1, 5, 10, 100."
     echo "           Default is 100."
@@ -480,20 +480,20 @@ do_check()
             tx=$bpstx ; ut=""
             [[ $bpsrx -gt 1100 ]] && { rx=$(($bpsrx/$DIVISOR)); ur="K${O}"; }
             [[ $bpstx -gt 1100 ]] && { tx=$(($bpstx/$DIVISOR)); ut="K${O}"; }
-            [[ $ur = "k$O" && $bpsrx -gt $((1100*$DIVISOR)) ]] && \
+            [[ $ur = "K$O" && $bpsrx -gt $((1100*$DIVISOR)) ]] && \
                 { rx=$(($rx/$DIVISOR)); ur="M${O}"; }
-            [[ $ut = "k$O" && $bpstx -gt $((1100*$DIVISOR)) ]] && \
+            [[ $ut = "K$O" && $bpstx -gt $((1100*$DIVISOR)) ]] && \
                 { tx=$(($tx/$DIVISOR)); ut="M$O"; }
             MESSAGE+="${IFL[i]}(${rx}$ur/${tx}$ut) "
         else
             # Bytes per second (message output)
             rx=$Bpsrx ; ur=""
             tx=$Bpstx ; ut=""
-            [[ $Bpsrx -gt 1100 ]] && { rx=$(($Bpsrx/$DIVISOR)); ur="k$O"; }
-            [[ $Bpstx -gt 1100 ]] && { tx=$(($Bpstx/$DIVISOR)); ut="k$O"; }
-            [[ $ur = "k$O" && $Bpsrx -gt $((1100*$DIVISOR)) ]] && \
+            [[ $Bpsrx -gt 1100 ]] && { rx=$(($Bpsrx/$DIVISOR)); ur="K$O"; }
+            [[ $Bpstx -gt 1100 ]] && { tx=$(($Bpstx/$DIVISOR)); ut="K$O"; }
+            [[ $ur = "K$O" && $Bpsrx -gt $((1100*$DIVISOR)) ]] && \
                 { rx=$(($rx/$DIVISOR)); ur="M$O"; }
-            [[ $ut = "k$O" && $Bpstx -gt $((1100*$DIVISOR)) ]] && \
+            [[ $ut = "K$O" && $Bpstx -gt $((1100*$DIVISOR)) ]] && \
                 { tx=$(($tx/$DIVISOR)); ut="M$O"; }
             MESSAGE+="${IFL[i]}(${rx}$ur/${tx}$ut) "
         fi
